@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير ثغرة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #0056b3;
+        }
+        .section {
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        code, pre {
+            background: #eee;
+            padding: 5px;
+            border-radius: 3px;
+            display: block;
+            overflow-x: auto;
+        }
+        hr {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>تقرير ثغرة Clickjacking</h1>
+
+    <div class="section">
+        <strong>الهدف:</strong> <a href="https://sudanembassyeg.gov.sd">https://sudanembassyeg.gov.sd</a><br>
+        <strong>الكاتب:</strong> shaheen101sec<br>
+        <strong>مستوى الخطورة:</strong> متوسط إلى عالي
+    </div>
+
+    <hr>
+
+    <h2>1. ملخص تنفيذي</h2>
+    <div class="section">
+        يوثق هذا التقرير اكتشاف ثغرة من نوع Clickjacking تؤثر على جميع النطاقات الفرعية والنقاط النهائية للموقع
+        <code>https://sudanembassyeg.gov.sd</code>. تُعد ثغرة Clickjacking هجومًا يهدف إلى خداع المستخدمين للنقر
+        على عناصر داخل الموقع دون علمهم من خلال إخفاءها داخل إطار شفاف أو مخفي. تسمح هذه الثغرة للمهاجمين بتوجيه المستخدمين للقيام بأفعال غير مقصودة، مما قد يؤدي إلى تنفيذ عمليات دون نية المستخدم.
+    </div>
+
+    <hr>
+
+    <h2>2. نظرة عامة على الثغرة</h2>
+    <div class="section">
+        <ul>
+            <li><strong>نوع الثغرة:</strong> Clickjacking (إعادة توجيه واجهة المستخدم)</li>
+            <li><strong>النطاقات والنقاط المتأثرة:</strong> جميع النطاقات الفرعية وصفحات الموقع <code>https://sudanembassyeg.gov.sd</code></li>
+            <li><strong>التأثير:</strong> متوسط إلى عالي</li>
+        </ul>
+        تتيح ثغرات Clickjacking للمهاجمين تنفيذ عمليات غير مصرح بها، وسرقة المعلومات، بل وقد تصل إلى اختراق حسابات المستخدمين في حال استهداف صفحات تحتوي على إجراءات حساسة.
+    </div>
+
+    <hr>
+
+    <h2>3. التفاصيل التقنية</h2>
+    <div class="section">
+        تحدث ثغرة Clickjacking بسبب عدم وجود رؤوس الحماية <code>X-Frame-Options</code> أو <code>Content-Security-Policy</code>، والتي تمنع تحميل الموقع داخل إطارات iframe.
+        <p><strong>الرؤوس المفقودة:</strong></p>
+        <ul>
+            <li><code>X-Frame-Options: DENY</code> أو <code>X-Frame-Options: SAMEORIGIN</code></li>
+            <li><code>Content-Security-Policy: frame-ancestors 'none'</code></li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2>4. إثبات المفهوم (PoC)</h2>
+    <div class="section">
+        يقدم هذا الدليل إثباتًا لكيفية استغلال هذه الثغرة بتحميل نطاق مستهدف في إطار غير مرئي على صفحة ضارة، مما يؤدي إلى خداع المستخدمين للنقر على زر أو رابط على موقع السفارة السودانية دون علمهم.
+        <h3>1. إنشاء ملف HTML لإثبات المفهوم</h3>
+        <pre><code>
+        &lt;!DOCTYPE html&gt;
+        &lt;html lang="ar"&gt;
+        &lt;head&gt;
+            &lt;meta charset="UTF-8"&gt;
+            &lt;title&gt;PoC Clickjacking&lt;/title&gt;
+            &lt;style&gt;
+                iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.01; }
+                .overlay { position: absolute; top: 50px; left: 50px; width: 200px; height: 50px; background-color: rgba(255, 0, 0, 0.5); z-index: 2; }
+            &lt;/style&gt;
+        &lt;/head&gt;
+        &lt;body&gt;
+            &lt;h2&gt;انقر للحصول على جائزتك!&lt;/h2&gt;
+            &lt;div class="overlay"&gt;&lt;/div&gt;
+            &lt;iframe src="https://sudanembassyeg.gov.sd"&gt;&lt;/iframe&gt;
+        &lt;/body&gt;
+        &lt;/html&gt;
+        </code></pre>
+        <h3>2. شرح إثبات المفهوم</h3>
+        - يقوم `iframe` بتحميل الصفحة المستهدفة من <code>https://sudanembassyeg.gov.sd</code>.<br>
+        - يتم وضع تراكب غير مرئي (`.overlay` div) في موقع معين حيث يوجد زر أو رابط على الصفحة.<br>
+        - يعتقد المستخدمون أنهم ينقرون للحصول على "جائزة"، ولكنهم في الواقع يتفاعلون مع الصفحة المخفية أسفل التراكب.
+    </div>
+
+    <hr>
+
+    <h2>5. تقييم التأثير</h2>
+    <div class="section">
+        <ul>
+            <li><strong>تأثير على المستخدم:</strong> مرتفع، خاصة في الصفحات التي تحتوي على إجراءات حساسة أو بيانات مهمة.</li>
+            <li><strong>تأثير على العمل:</strong> متوسط إلى مرتفع، حيث قد يفقد المستخدمون الثقة في الموقع إذا وقعوا ضحية لهذا الهجوم.</li>
+        </ul>
+    </div>
+
+    <hr>
+
+    <h2>6. التوصيات لتخفيف الثغرة</h2>
+    <div class="section">
+        للتخفيف من هذه الثغرة، يجب تنفيذ رؤوس الحماية التالية في جميع الاستجابات من الخادم:
+        <ol>
+            <li><strong>رأس X-Frame-Options</strong>
+                <ul>
+                    <li>أضف <code>X-Frame-Options: DENY</code> لمنع تحميل الموقع في أي إطار خارجي.</li>
+                    <li>بدلاً من ذلك، يمكن استخدام <code>X-Frame-Options: SAMEORIGIN</code> للسماح فقط للنطاق الأصلي بإطار المحتوى.</li>
+                </ul>
+            </li>
+            <li><strong>رأس Content-Security-Policy</strong><br>
+                تطبيق <code>Content-Security-Policy: frame-ancestors 'none';</code> كإجراء إضافي لمنع تضمين المحتوى.
+            </li>
+            <li><strong>التحقق والمراقبة</strong><br>
+                تحقق من تواجد هذه الرؤوس على جميع النطاقات الفرعية والنقاط النهائية. إجراء تقييمات أمنية منتظمة لضمان الالتزام بمعايير الدفاع ضد Clickjacking.
+            </li>
+        </ol>
+    </div>
+
+    <hr>
+
+    <h2>7. الخاتمة</h2>
+    <div class="section">
+        يمكن أن تؤدي ثغرة Clickjacking على <code>https://sudanembassyeg.gov.sd</code> إلى تعريض المستخدمين لمخاطر كبيرة إذا تم استغلالها من قبل المهاجمين. ننصح باتخاذ التدابير الوقائية الموصى بها في أقرب وقت ممكن لتأمين المستخدمين.
+    </div>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير الثغرات المحتملة - https://sudanembassyeg.gov.sd</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .section {
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .section h3 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .section ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .section ul li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        code, pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #3498db;
+            padding: 10px;
+            display: block;
+            white-space: pre-wrap;
+        }
+        .risk {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .recommendation {
+            color: #2ecc71;
+        }
+        .note {
+            background-color: #eafaf1;
+            border-left: 4px solid #2ecc71;
+            padding: 10px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>تقرير الثغرات المحتملة - https://sudanembassyeg.gov.sd</h1>
+
+    <div class="section">
+        <h2>مقدمة</h2>
+        <p>يوضح هذا التقرير الثغرات الأمنية المحتملة على المنافذ المفتوحة والبروتوكولات المكتشفة على النطاق <a href="https://sudanembassyeg.gov.sd">https://sudanembassyeg.gov.sd</a>. تتضمن هذه المنافذ خدمات معروفة بالثغرات الأمنية إذا لم يتم تحديثها وتأمينها بشكل صحيح. في هذا التقرير، نستعرض الثغرات الرئيسية وتوصيات الإصلاح.</p>
+    </div>
+
+    <div class="section">
+        <h3>تفاصيل المنافذ المفتوحة والثغرات المحتملة</h3>
+
+        <ul>
+            <li><strong>Port 21 (FTP - Pure-FTPd):</strong>
+                <p class="risk">المخاطر:</p>
+                <ul>
+                    <li><strong>CVE-2019-20123:</strong> هجوم "الاستغلال عن بُعد" بسبب تجاوز سعة الذاكرة في بعض إصدارات Pure-FTPd.</li>
+                    <li>استخدام FTP بدون تشفير يعرض البيانات لخطر التنصت وسرقة بيانات الاعتماد.</li>
+                </ul>
+                <p class="recommendation">التوصيات:</p>
+                <ul>
+                    <li>تفعيل FTPS أو SFTP لضمان اتصال مشفر وآمن.</li>
+                    <li>تحديث Pure-FTPd إلى أحدث إصدار لتجنب الثغرات المعروفة مثل CVE-2019-20123.</li>
+                </ul>
+            </li>
+            
+            <li><strong>Port 25 (SMTP):</strong>
+                <p class="risk">المخاطر:</p>
+                <ul>
+                    <li><strong>CVE-2020-28017:</strong> ثغرة تجاوز حدود الذاكرة في بعض إصدارات Exim مما يتيح للهجوم تنفيذ التعليمات البرمجية عن بعد.</li>
+                    <li>عدم تأمين الاتصال يؤدي إلى تعرض الخدمة لهجمات SPAM وMITM (الرجل في المنتصف).</li>
+                </ul>
+                <p class="recommendation">التوصيات:</p>
+                <ul>
+                    <li>تحديث خوادم Exim لتجنب الاستغلالات المحتملة.</li>
+                    <li>تفعيل SSL/TLS على بروتوكول SMTP للحماية من هجمات التنصت.</li>
+                </ul>
+            </li>
+            
+            <li><strong>Port 110 (POP3 - Dovecot pop3d):</strong>
+                <p class="risk">المخاطر:</p>
+                <ul>
+                    <li><strong>CVE-2019-7524:</strong> ثغرة في Dovecot تتيح للمهاجمين تجاوز التحكم في الوصول للملفات.</li>
+                    <li>نقل POP3 بدون تشفير يجعل البيانات عرضة للتنصت وسرقة معلومات الدخول.</li>
+                </ul>
+                <p class="recommendation">التوصيات:</p>
+                <ul>
+                    <li>تفعيل POP3S بدلاً من POP3، وتحديث Dovecot إلى أحدث إصدار.</li>
+                    <li>تطبيق مصادقة ثنائية لتحسين أمان الحسابات.</li>
+                </ul>
+            </li>
+
+            <li><strong>Port 143 (IMAP - Dovecot imapd):</strong>
+                <p class="risk">المخاطر:</p>
+                <ul>
+                    <li><strong>CVE-2021-33515:</strong> ثغرة في Dovecot تتعلق بالتعامل غير الصحيح مع طلبات IMAP، مما يؤدي إلى إمكانية رفض الخدمة.</li>
+                    <li>الاتصال غير المشفر يعرض حسابات البريد الإلكتروني لخطر التنصت وسرقة معلومات المستخدمين.</li>
+                </ul>
+                <p class="recommendation">التوصيات:</p>
+                <ul>
+                    <li>تفعيل IMAPS بدلاً من IMAP لتأمين الاتصال.</li>
+                    <li>تحديث Dovecot لتجنب الثغرات المعروفة مثل CVE-2021-33515.</li>
+                </ul>
+            </li>
+
+            <li><strong>Port 465 and 587 (SSL/SMTP - Exim smtpd 4.96.2):</strong>
+                <p class="risk">المخاطر:</p>
+                <ul>
+                    <li><strong>CVE-2019-16928:</strong> ثغرة تجاوز سعة الذاكرة في Exim 4.92 قد تسمح بتنفيذ تعليمات برمجية ضارة عن بعد.</li>
+                    <li>قد يؤدي خادم البريد المفتوح إلى استقبال رسائل غير مرغوب فيها (Spam) واستغلاله في هجمات بريدية.</li>
+                </ul>
+                <p class="recommendation">التوصيات:</p>
+                <ul>
+                    <li>تحديث Exim إلى أحدث إصدار.</li>
+                    <li>استخدام سياسات مكافحة البريد العشوائي وتفعيل SSL/TLS.</li>
+                </ul>
+            </li>
+
+            <li><strong>Port 3306 (MySQL - MariaDB 10.6.18):</strong>
+                <p class="risk">المخاطر:</p>
+                <ul>
+                    <li><strong>CVE-2021-27928:</strong> ثغرة تسمح للمهاجمين بإجراء هجوم تجاوز الحقوق في MySQL 5.5.</li>
+                    <li>تخزين البيانات الحساسة في قاعدة البيانات بدون تشفير يجعلها عرضة للتطفل إذا تم الوصول إلى المنفذ.</li>
+                </ul>
+                <p class="recommendation">التوصيات:</p>
+                <ul>
+                    <li>تقييد الوصول إلى قاعدة البيانات من خلال قواعد جدار الحماية.</li>
+                    <li>تحديث MariaDB وتطبيق مراقبة وصول صارمة.</li>
+                </ul>
+            </li>
+
+            <li><strong>Port 65002 (SSH - OpenSSH 7.4):</strong>
+                <p class="risk">المخاطر:</p>
+                <ul>
+                    <li><strong>CVE-2016-10009:</strong> استغلال يسمح بتنفيذ تعليمات برمجية عن بُعد في OpenSSH 7.4 عند تفعيل خيارات معينة.</li>
+                    <li>إصدارات OpenSSH الأقدم قد تحتوي على ثغرات تعرض النظام لهجوم الوصول عن بُعد أو تجاوز صلاحيات الوصول.</li>
+                </ul>
+                <p class="recommendation">التوصيات:</p>
+                <ul>
+                    <li>تحديث OpenSSH إلى أحدث إصدار وتعطيل المصادقة بكلمة المرور وتفعيل المصادقة عبر المفتاح العام.</li>
+                    <li>استخدام ملفات التكوين الصارمة وتعطيل البروتوكولات غير المستخدمة.</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3>تفاصيل طرق HTTP المسموح بها على المنفذ 2077</h3>
+        <p>تشمل الطرق المسموح بها على المنفذ 2077 ما يلي: <code>LOCK, GET, MKCOL, PUT, HEAD, MOVE, POST, UNLOCK, DELETE, COPY, PROPPATCH, PROPFIND, OPTIONS</code>.</p>
+        <p class="risk">المخاطر:</p>
+        <ul>
+            <li><strong>الطرق مثل PUT وDELETE:</strong> يمكن أن تؤدي إلى تحميل الملفات الضارة أو تعديل البيانات الحالية، مما يعرض الموقع لهجمات رفع الملفات والتلاعب بالمحتوى.</li>
+        </ul>
+        <p class="recommendation">التوصيات:</p>
+        <ul>
+            <li>تقييد الطرق المسموح بها إلى الطرق الضرورية فقط، وتعطيل طرق مثل <code>PUT</code> و<code>DELETE</code> إن لم تكن مطلوبة.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3>الخاتمة</h3>
+        <p>يتضمن هذا التقرير قائمة بالمنافذ المفتوحة على <a href="https://sudanembassyeg.gov.sd">https://sudanembassyeg.gov.sd</a> وتفاصيل حول الثغرات الأمنية المحتملة مع أمثلة CVEs وتوصيات للتأمين. يوصى بمتابعة التحديثات الأمنية الدورية وتنفيذ الإجراءات الموصى بها لتعزيز أمان النظام وحمايته من الهجمات.</p>
+    </div>
+
+</body>
+</html>
