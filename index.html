@@ -333,3 +333,106 @@
 
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير الثغرة الأمنية - CSRF Token Exposure</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .section {
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        .section h3 {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        .section ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .section ul li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        code, pre {
+            background-color: #f4f4f4;
+            border-left: 4px solid #3498db;
+            padding: 10px;
+            display: block;
+            white-space: pre-wrap;
+        }
+        .risk {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .recommendation {
+            color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>تقرير الثغرة الأمنية - CSRF Token Exposure</h1>
+
+    <div class="section">
+        <h2>مقدمة</h2>
+        <p>يوضح هذا التقرير وجود توكن CSRF مكشوف على موقع <a href="https://65.108.91.105/">https://65.108.91.105/</a>. يتمثل هذا التوكن في القيمة الثابتة التالية التي تم العثور عليها في شفرة HTML المصدرية:</p>
+        <pre><code>&lt;input type="hidden" id="csrf_test_name" name="csrf_test_name" value="368e14cdc2cf966293e6c2f0704980cf"&gt;</code></pre>
+        <p>في حين أن وجود توكن CSRF يعتبر إجراء أمني ضروري، إلا أن طريقة تنفيذه قد تكون عرضة للاستغلال في حال عدم توافر خصائص الأمان اللازمة. يسرد التقرير المخاطر والتوصيات المقترحة لتحسين الأمان.</p>
+    </div>
+
+    <div class="section">
+        <h3>المخاطر المحتملة</h3>
+        
+        <ul>
+            <li><strong>توكين ثابت أو متكرر:</strong> إذا كان التوكن ثابتًا أو لا يتغير عبر الجلسات، قد يؤدي ذلك إلى السماح للمهاجمين باستغلاله في تنفيذ هجمات CSRF.</li>
+            <li><strong>عدم تشفير التوكن:</strong> في حال لم يتم تأمين الموقع باستخدام HTTPS، فإن التوكن قد يتم اعتراضه بواسطة هجمات Man-in-the-Middle (MITM) مما يزيد من خطر سرقته.</li>
+            <li><strong>غياب التحقق من صحة التوكن:</strong> في حال كان التوكن موجودًا في النموذج فقط دون تحقق من صحة الطلب على الخادم، يمكن أن يتم تجاهل التحقق من التوكن مما يجعله عديم الفائدة في منع هجمات CSRF.</li>
+            <li><strong>التعرض لـ XSS:</strong> إذا كان التوكن مكشوفًا أو يمكن الوصول إليه عبر JavaScript غير آمن، فإن مهاجم قد يتمكن من سرقته واستخدامه لتنفيذ عمليات غير مصرح بها.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3>التوصيات الأمنية</h3>
+        
+        <ul>
+            <li><span class="recommendation">تحديث التوكن ديناميكيًا:</span> يجب إنشاء توكن CSRF فريد لكل جلسة أو لكل طلب لضمان أن المهاجمين لا يمكنهم استغلاله في هجمات مستقبلية.</li>
+            <li><span class="recommendation">تأمين الموقع باستخدام HTTPS:</span> تأكد من أن جميع الاتصالات مشفرة عبر HTTPS لمنع التوكن من التعرض للاعتراض بواسطة الهجمات.</li>
+            <li><span class="recommendation">التحقق من صحة التوكن في جانب الخادم:</span> يجب التحقق من صلاحية توكن CSRF في كل طلب حساس يتم إرساله إلى الخادم لمنع الهجمات.</li>
+            <li><span class="recommendation">حماية التوكن من XSS:</span> إذا كان التوكن يمكن الوصول إليه عبر JavaScript، تأكد من حماية الموقع من هجمات XSS التي قد تعرض التوكن للخطر.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3>اختبار الأمان المقترح</h3>
+        <p>للتحقق من فعالية توكن CSRF ومقاومته للهجمات، قم بإجراء الاختبارات التالية:</p>
+        <ul>
+            <li>تحقق مما إذا كان التوكن يتغير عند إعادة تحميل الصفحة أو إنشاء جلسات جديدة.</li>
+            <li>قم بإجراء طلب غير مصرح به مع توكن قديم. إذا تم قبول الطلب، فقد يشير ذلك إلى أن التحقق من التوكن غير فعّال.</li>
+            <li>افحص الموقع للتأكد من استخدام HTTPS في جميع الصفحات التي تتطلب إرسال التوكن.</li>
+            <li>حاول الوصول إلى التوكن باستخدام JavaScript عبر XSS. إذا تمكنت من الوصول، قد تكون هناك ثغرة XSS.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3>الخاتمة</h3>
+        <p>يعد وجود توكن CSRF خطوة مهمة في حماية الموقع من الهجمات، لكن التوكن في موقع <a href="https://65.108.91.105/">https://65.108.91.105/</a> قد يكون عرضة للاستغلال في حال عدم تطبيق الإجراءات الوقائية المذكورة أعلاه. يُنصح بتنفيذ التوصيات المذكورة لضمان فعالية الحماية ضد هجمات CSRF.</p>
+    </div>
+
+</body>
+</html>
